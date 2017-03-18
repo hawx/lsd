@@ -32,15 +32,7 @@ model : Model
 model =
     { diamondStart = Nothing
     , position = (0, 0)
-    , stars = [ Star (50, 50) False
-              , Star (100, 100) False
-              , Star (90, 130) False
-              , Star (60, 170) False
-              , Star (170, 200) False
-              , Star (300, 180) False
-
-              , Star (50, 100) False
-              ]
+    , stars = []
     , diamonds = []
     }
 
@@ -63,7 +55,7 @@ update msg model =
             in
                 case (model.diamondStart, selectedStar) of
                     (Just diamondStart, Just selectedStar) ->
-                        { model | diamondStart = Nothing, diamonds = Diamond diamondStart selectedStar :: model.diamonds } ! []
+                        { model | diamondStart = Nothing, diamonds = Diamond diamondStart selectedStar False :: model.diamonds } ! []
 
                     (Just _, Nothing) ->
                         { model | diamondStart = Nothing } ! []
@@ -76,7 +68,14 @@ update msg model =
 
 
         MouseMove position ->
-            { model | position = getLocalPosition position } ! []
+            case model.diamondStart of
+                Just diamondStart ->
+                    { model
+                        | position = getLocalPosition position
+                        , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False) model.diamonds } ! []
+
+                Nothing ->
+                    { model | position = getLocalPosition position } ! []
 
         AddStar pos ->
             if tooClose pos model.stars then
@@ -100,6 +99,10 @@ clickedStar : Mouse.Position -> List Star -> Maybe Star
 clickedStar clickPos stars =
     List.head <| List.filter (\star -> within star.center 8 (getLocalPosition clickPos)) stars
 
+overlappedDiamonds : Diamond -> List Diamond -> List Diamond
+overlappedDiamonds diamond =
+    List.map (\x -> { x | overlaps = Shapes.overlap diamond x })
+
 -- View
 
 view : Model -> Html Msg
@@ -121,7 +124,7 @@ game model =
 
 possibleDiamondAt : Maybe (Float, Float) -> (Float, Float) -> Maybe Collage.Form
 possibleDiamondAt start end =
-    Maybe.map (\s -> Shapes.drawDiamond { start = s, end = end }) start
+    Maybe.map (\s -> Shapes.drawDiamond { start = s, end = end, overlaps = False }) start
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

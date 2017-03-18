@@ -7,18 +7,9 @@ import Element
 import Color
 import Mouse
 import Random
-
-gameMargin : Float
-gameMargin = 41
-
-gameHeight : number
-gameHeight = 700
-
-gameWidth : number
-gameWidth = 700
-
-totalStars : Int
-totalStars = 30
+import Shapes exposing (Diamond, Star)
+import Helpers exposing (within)
+import Canvas exposing (..)
 
 main =
     Html.program
@@ -34,11 +25,7 @@ type alias Model =
     { diamondStart : Maybe (Float, Float)
     , position : (Float, Float)
     , stars : List Star
-    }
-
-type alias Star =
-    { position : (Float, Float)
-    , selected : Bool
+    , diamonds : List Diamond
     }
 
 model : Model
@@ -54,6 +41,7 @@ model =
 
               , Star (50, 100) False
               ]
+    , diamonds = []
     }
 
 randomPoint : Random.Generator (Float, Float)
@@ -70,7 +58,10 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         MouseClick position ->
-            { model | diamondStart = Maybe.map .position <| clickedStar position model.stars } ! []
+            let
+                selectedStar = clickedStar position model.stars
+            in
+                { model | diamondStart = Maybe.map .center selectedStar  } ! []
 
         MouseMove position ->
             { model | position = getLocalPosition position } ! []
@@ -91,19 +82,11 @@ tooClose ((x, y) as pos) stars =
         minDistance = 50
         margin = 10
     in
-        List.any (\star -> within star.position minDistance pos) stars || x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin
+        List.any (\star -> within star.center minDistance pos) stars || x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin
 
 clickedStar : Mouse.Position -> List Star -> Maybe Star
 clickedStar clickPos stars =
-    List.head <| List.filter (\star -> within star.position 8 (getLocalPosition clickPos)) stars
-
-getLocalPosition : Mouse.Position -> (Float, Float)
-getLocalPosition { x, y } =
-    (toFloat x - gameMargin, toFloat y - gameMargin)
-
-absoluteToCanvas : (Float, Float) -> (Float, Float)
-absoluteToCanvas (x, y) =
-    (x - (gameWidth / 2), (gameHeight / 2) - y)
+    List.head <| List.filter (\star -> within star.center 8 (getLocalPosition clickPos)) stars
 
 -- View
 
@@ -117,7 +100,7 @@ view model =
 game : Model -> Element.Element
 game model =
     List.filterMap identity
-        [ Just <| List.map (starAt model.position) model.stars
+        [ Just <| List.map (Shapes.drawStar model.position) model.stars
         , Maybe.map List.singleton <| possibleDiamondAt model.diamondStart model.position
         ]
         |> List.concat
@@ -125,47 +108,7 @@ game model =
 
 possibleDiamondAt : Maybe (Float, Float) -> (Float, Float) -> Maybe Collage.Form
 possibleDiamondAt start end =
-    Maybe.map (\s -> diamond s end) start
-
-diamond : (Float, Float) -> (Float, Float) -> Collage.Form
-diamond (startPosX, startPosY) (endPosX, endPosY) =
-    let
-        scale = sqrt (((endPosX - startPosX)^2) + ((endPosY - startPosY)^2))
-        angle = atan2 (endPosY - startPosY) (endPosX - startPosX)
-    in
-        Collage.polygon
-            [ (0, 0)
-            , (scale * 0.7, scale * 0.25)
-            , (scale, 0)
-            , (scale * 0.7, -scale * 0.25)
-            ]
-            |> Collage.outlined (Collage.solid (Color.hsl (degrees 350) 1 0.5))
-            |> Collage.move (absoluteToCanvas (startPosX, startPosY))
-            |> Collage.rotate -angle
-
-starAt : (Float, Float) -> Star -> Collage.Form
-starAt mousePos star =
-    Collage.move (absoluteToCanvas star.position) (starShape (within star.position 8 mousePos) star.selected)
-
-within : (Float, Float) -> Float -> (Float, Float) -> Bool
-within (targetX, targetY) radius (actualX, actualY) =
-    targetX - radius <= actualX && actualX <= targetX + radius
-        && targetY - radius <= actualY && actualY <= targetY + radius
-
-starShape : Bool -> Bool -> Collage.Form
-starShape isOver isSelected =
-    Collage.filled (starColour isOver isSelected) (Collage.circle 5)
-
-starColour : Bool -> Bool -> Color.Color
-starColour isOver isSelected =
-    if isSelected then
-        Color.hsl (degrees 350) 1 0.5
-    else
-        if isOver then
-            Color.hsl (degrees 350) 1 0.3
-        else
-            Color.hsl (degrees 250) 1 0.5
-
+    Maybe.map (\s -> Shapes.drawDiamond { start = s, end = end }) start
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

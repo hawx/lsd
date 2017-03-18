@@ -2,6 +2,7 @@ module Game exposing (init, view, update, subscriptions)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events as Event
 import Collage
 import Element
 import Color
@@ -15,7 +16,7 @@ import Players exposing (..)
 import Time exposing (Time)
 
 turnTime : Time
-turnTime = 100
+turnTime = 50
 
 init : (Model, Cmd Msg)
 init =
@@ -23,7 +24,7 @@ init =
 
 -- Model
 
-type State = NotStarted | Playing | Won Player | Draw
+type State = NotStarted | Playing | Skipped | Won Player | Draw
 
 type alias Model =
     { diamondStart : Maybe (Float, Float)
@@ -60,10 +61,14 @@ type Msg = MouseClick Mouse.Position
          | MouseMove Mouse.Position
          | AddStar (Float, Float)
          | Tick Time
+         | StartGame
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        StartGame ->
+            { model | state = Playing } ! []
+
         MouseClick position ->
             let
                 selectedStar = Maybe.map .center <| clickedStar position model.stars
@@ -74,8 +79,8 @@ update msg model =
                             model ! []
                         else
                             endTurn 1 { model
-                                | diamondStart = Nothing
-                                , diamonds = Diamond diamondStart selectedStar False model.currentPlayer :: model.diamonds
+                                          | diamondStart = Nothing
+                                          , diamonds = Diamond diamondStart selectedStar False model.currentPlayer :: model.diamonds
                             } ! []
 
                     (Just _, Nothing) ->
@@ -111,7 +116,19 @@ update msg model =
                     { model | stars = Star pos False :: model.stars } ! []
 
         Tick time ->
-            { model | timer = model.timer - 1 } ! []
+            if model.timer == 0 then
+                if model.state == Skipped then
+                    if model.playerA > model.playerB then
+                        { model | state = Won A } ! []
+                    else
+                        if model.playerB > model.playerA then
+                            { model | state = Won B } ! []
+                        else
+                            { model | state = Draw } ! []
+                else
+                    endTurn 0 { model | diamondStart = Nothing, state = Skipped } ! []
+            else
+                { model | timer = model.timer - 1 } ! []
 
 
 endTurn : Int -> Model -> Model
@@ -151,29 +168,64 @@ overlappedDiamonds diamond =
 view : Model -> Html Msg
 view model =
     Html.div [ Attr.class "container" ]
-        [ Html.div [ Attr.class "game" ]
-              [ Element.toHtml (game model) ]
-        , Html.div [ Attr.class "scores" ]
-            [ Html.div [ Attr.class "score" ]
-                  [ Html.h1 [] [ Html.text "Turn Time" ]
-                  , Html.h2 [] [ Html.text (toString model.timer) ]
-                  ]
-            , Html.div [ Attr.class "score"
-                       , Attr.classList [ ("active", model.currentPlayer == A) ]
-                       ]
-                  [ Html.h1 [] [ Html.text "Player A" ]
-                  , Html.h2 [] [ Html.text (toString model.playerA) ]
-                  ]
-            , Html.div [ Attr.class "score"
-                       , Attr.classList [ ("active", model.currentPlayer == B) ]
-                       ]
-                [ Html.h1 [] [ Html.text "Player B" ]
-                , Html.h2 [] [ Html.text (toString model.playerB) ]
-                ]
+        [ Html.div [ Attr.class "game" ] <|
+              List.concat [ overlay model, [ game model ] ]
+        , scores model
+        ]
+
+overlay : Model -> List (Html Msg)
+overlay model =
+    case model.state of
+        NotStarted ->
+            [ Html.div [ Attr.class "overlay", Event.onClick StartGame ]
+                  [ Html.h1 [] [ Html.text "Click to play" ] ]
+            ]
+
+        Playing ->
+            []
+
+        Skipped ->
+            []
+
+        Won player ->
+            case player of
+                A ->
+                    [ Html.div [ Attr.class "overlay" ]
+                          [ Html.h1 [] [ Html.text "Player A Won" ] ]
+                    ]
+                B ->
+                    [ Html.div [ Attr.class "overlay" ]
+                          [ Html.h1 [] [ Html.text "Player B Won" ] ]
+                    ]
+
+        Draw ->
+            [ Html.div [ Attr.class "overlay" ]
+                  [ Html.h1 [] [ Html.text "It was a Draw" ] ]
+            ]
+
+
+scores : Model -> Html Msg
+scores model =
+    Html.div [ Attr.class "scores" ]
+        [ Html.div [ Attr.class "score" ]
+              [ Html.h1 [] [ Html.text "Turn Time" ]
+              , Html.h2 [] [ Html.text (toString model.timer) ]
+              ]
+        , Html.div [ Attr.class "score"
+                   , Attr.classList [ ("active", model.currentPlayer == A) ]
+                   ]
+            [ Html.h1 [] [ Html.text "Player A" ]
+            , Html.h2 [] [ Html.text (toString model.playerA) ]
+            ]
+        , Html.div [ Attr.class "score"
+                   , Attr.classList [ ("active", model.currentPlayer == B) ]
+                   ]
+            [ Html.h1 [] [ Html.text "Player B" ]
+            , Html.h2 [] [ Html.text (toString model.playerB) ]
             ]
         ]
 
-game : Model -> Element.Element
+game : Model -> Html msg
 game model =
     List.filterMap identity
         [ Just <| [ background ]
@@ -183,6 +235,7 @@ game model =
         ]
         |> List.concat
         |> Collage.collage gameHeight gameWidth
+        |> Element.toHtml
 
 background : Collage.Form
 background =
@@ -203,8 +256,11 @@ possibleDiamondAt currentPlayer start end =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
+    if model.state == Playing || model.state == Skipped then
+        Sub.batch
         [ Mouse.clicks MouseClick
         , Mouse.moves MouseMove
         , Time.every Time.second Tick
         ]
+    else
+        Sub.none

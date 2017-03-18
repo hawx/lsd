@@ -103,20 +103,16 @@ update msg model =
             case model.diamondStart of
                 Just diamondStart ->
                     let
-                        selectedStar = Maybe.map .center <| clickedStar position model.stars
-                    in
-                        case selectedStar of
-                            Just selectedStar ->
-                                { model
-                                    | position = selectedStar
-                                    , diamonds = overlappedDiamonds (Diamond diamondStart selectedStar False model.currentPlayer) model.diamonds
-                                } ! []
+                        selectedStar =
+                            Maybe.map .center <| clickedStar position model.stars
 
-                            Nothing ->
-                                { model
-                                    | position = getLocalPosition position
-                                    , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False model.currentPlayer) model.diamonds
-                                } ! []
+                        drawDiamond pos =
+                            { model
+                                | position = pos
+                                , diamonds = overlappedDiamonds (Diamond diamondStart pos False model.currentPlayer) model.diamonds
+                            }
+                    in
+                        drawDiamond (Maybe.withDefault (getLocalPosition position) selectedStar) ! []
 
                 Nothing ->
                     { model | position = getLocalPosition position } ! []
@@ -133,17 +129,21 @@ update msg model =
         Tick time ->
             if model.timer == 0 then
                 if model.state == Skipped then
-                    if model.playerA > model.playerB then
-                        { model | state = Won A } ! []
-                    else
-                        if model.playerB > model.playerA then
-                            { model | state = Won B } ! []
-                        else
-                            { model | state = Draw } ! []
+                    { model | state = winner model.playerA model.playerB } ! []
                 else
                     endTurn 0 { model | diamondStart = Nothing, state = Skipped } ! []
             else
                 { model | timer = model.timer - 1 } ! []
+
+winner : Int -> Int -> State
+winner playerA playerB =
+    if playerA > playerB then
+        Won A
+    else
+        if playerB > playerA then
+            Won B
+        else
+            Draw
 
 
 endTurn : Int -> Model -> Model
@@ -173,7 +173,7 @@ tooClose ((x, y) as pos) stars =
 
 clickedStar : Mouse.Position -> List Star -> Maybe Star
 clickedStar clickPos stars =
-    List.head <| List.filter (\star -> Vector.within star.center 8 (getLocalPosition clickPos)) stars
+    List.head <| List.filter (\star -> Vector.within star.center Star.hoverRadius (getLocalPosition clickPos)) stars
 
 overlappedDiamonds : Diamond -> List Diamond -> List Diamond
 overlappedDiamonds diamond =

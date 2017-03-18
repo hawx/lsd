@@ -19,38 +19,37 @@ type alias Diamond =
 
 draw : Diamond -> Collage.Form
 draw ({ start, end, overlaps, player } as diamond) =
-    diamondPoints diamond
+    points diamond
         |> Collage.polygon
         |> Collage.outlined (Collage.solid (diamondColour overlaps player))
 
-diamondPoints : Diamond -> List (Float, Float)
-diamondPoints { start, end } =
-    let
-        scale =
-            Vector.distance start end
-    in
-        [ (0, 0)
-        , (scale * 0.7, scale * 0.25)
-        , (scale, 0)
-        , (scale * 0.7, -scale * 0.25)
-        ]
+
+points : Diamond -> List (Float, Float)
+points { start, end } =
+    [ (0, 0), (0.7, 0.25), (1, 0), (0.7, -0.25) ]
+        |> List.map (Vector.scale (Vector.distance start end))
         |> List.map (Vector.rotate -(Vector.angle start end))
         |> List.map (Vector.move (absoluteToCanvas start))
 
+
+edges : Diamond -> List ((Float, Float), (Float, Float))
+edges diamond =
+    case points diamond of
+        [p, q, r, s] ->
+            [(p, q), (q, r), (r, s), (s, p)]
+
+        _ ->
+            []
+
+
 overlap : Diamond -> Diamond -> Bool
 overlap a b =
-    let
-        lines pts =
-            case pts of
-                [p, q, r, s] ->
-                    [(p, q), (q, r), (r, s), (s, p)]
-                _ ->
-                    []
+    any2 (\x y -> Vector.toInt x == Vector.toInt y) (points a) (points b)
+        || any2 (Vector.intersect) (edges a) (edges b)
 
-        aLines = lines (diamondPoints a)
-        bLines = lines (diamondPoints b)
-    in
-        List.any (\x -> List.any (Vector.intersect x) aLines) bLines
+any2 : (a -> b -> Bool) -> List a -> List b -> Bool
+any2 f xs ys =
+    List.any (\x -> List.any (\y -> f x y) ys) xs
 
 diamondColour : Bool -> Player -> Color.Color
 diamondColour isOverlap player =

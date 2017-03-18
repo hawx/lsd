@@ -1,5 +1,6 @@
 module Star exposing ( Star
                      , draw
+                     , hoverRadius
                      )
 
 import Collage
@@ -13,17 +14,16 @@ type alias Star =
     , selected : Bool
     }
 
+starRadius = 5
+hoverRadius = 8
 
 draw : (Float, Float) -> Star -> Collage.Form
 draw mousePos star =
     let
         isOver =
-            Vector.within star.center 8 mousePos
-
-        radius =
-            5
+            Vector.within star.center hoverRadius mousePos
     in
-        Collage.circle radius
+        Collage.circle starRadius
             |> Collage.filled (starColour isOver star.selected)
             |> Collage.move (absoluteToCanvas star.center)
 

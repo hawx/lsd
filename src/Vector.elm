@@ -6,6 +6,14 @@ type alias Point =
 type alias Vector =
     (Point, Point)
 
+toInt : Point -> (Int, Int)
+toInt (x, y) =
+    (round x, round y)
+
+scale : Float -> Point -> Point
+scale factor (x, y) =
+    (x * factor, y * factor)
+
 rotate : Float -> Point -> Point
 rotate theta (x, y) =
     ( x * cos theta - y * sin theta

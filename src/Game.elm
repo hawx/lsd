@@ -59,7 +59,7 @@ update msg model =
             in
                 case (model.diamondStart, selectedStar) of
                     (Just diamondStart, Just selectedStar) ->
-                        if List.any .overlaps model.diamonds then
+                        if List.any .overlaps <| overlappedDiamonds (Diamond diamondStart selectedStar False model.currentPlayer) model.diamonds then
                             model ! []
                         else
                             endTurn 1 { model

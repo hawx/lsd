@@ -6,7 +6,7 @@ import Collage
 import Element
 import Color
 import Mouse
-import Debug
+import Random
 
 gameMargin : Float
 gameMargin = 41
@@ -19,7 +19,7 @@ gameWidth = 700
 
 main =
     Html.program
-        { init = (model, Cmd.none)
+        { init = (model, Random.generate SetStars randomPoints)
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -44,14 +44,24 @@ model =
     , position = (0, 0)
     , stars = [ Star (50, 50) False
               , Star (100, 100) False
+              , Star (90, 130) False
+              , Star (60, 170) False
+              , Star (170, 200) False
+              , Star (300, 180) False
+
               , Star (50, 100) False
               ]
     }
+
+randomPoints : Random.Generator (List (Float, Float))
+randomPoints =
+    Random.list 10 <| Random.pair (Random.float 0 gameWidth) (Random.float 0 gameHeight)
 
 -- Update
 
 type Msg = MouseClick Mouse.Position
          | MouseMove Mouse.Position
+         | SetStars (List (Float, Float))
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -61,6 +71,9 @@ update msg model =
 
         MouseMove position ->
             { model | position = getLocalPosition position } ! []
+
+        SetStars list ->
+            { model | stars = List.map (\x -> Star x False) list } ! []
 
 
 clickedStar : Mouse.Position -> List Star -> Maybe Star

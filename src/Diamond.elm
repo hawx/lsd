@@ -9,6 +9,7 @@ import Canvas exposing (absoluteToCanvas)
 import Players exposing (Player)
 import Vector
 
+
 type alias Diamond =
     { start : (Float, Float)
     , end : (Float, Float)
@@ -47,9 +48,11 @@ overlap a b =
     any2 (\x y -> Vector.toInt x == Vector.toInt y) (points a) (points b)
         || any2 (Vector.intersect) (edges a) (edges b)
 
+
 any2 : (a -> b -> Bool) -> List a -> List b -> Bool
 any2 f xs ys =
     List.any (\x -> List.any (\y -> f x y) ys) xs
+
 
 diamondColour : Bool -> Player -> Color.Color
 diamondColour isOverlap player =

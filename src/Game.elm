@@ -234,18 +234,22 @@ scores model =
               , Html.h2 [] [ Html.text (toString model.timer) ]
               ]
         , Html.div [ Attr.class "score"
-                   , Attr.classList [ ("active", model.currentPlayer == A && (model.state == Playing || model.state == Skipped)) ]
+                   , Attr.classList [ ("active", model.currentPlayer == A && isPlaying model.state) ]
                    ]
             [ Html.h1 [] [ Html.text "Player A" ]
             , Html.h2 [] [ Html.text (toString model.playerA) ]
             ]
         , Html.div [ Attr.class "score"
-                   , Attr.classList [ ("active", model.currentPlayer == B && (model.state == Playing || model.state == Skipped)) ]
+                   , Attr.classList [ ("active", model.currentPlayer == B && isPlaying model.state) ]
                    ]
             [ Html.h1 [] [ Html.text "Player B" ]
             , Html.h2 [] [ Html.text (toString model.playerB) ]
             ]
         ]
+
+isPlaying : State -> Bool
+isPlaying state =
+    state == Playing || state == Skipped
 
 game : Model -> Html msg
 game model =
@@ -261,13 +265,9 @@ game model =
 
 background : Collage.Form
 background =
-    Collage.gradient (Color.linear
-                          (0, gameHeight / 2)
-                          (0, -gameHeight / 2)
-                          [ (0.6, Color.hsl 0 0 0)
-                          , (1, Color.hsl (degrees 240) 1 0.1)
-                          ]
-                     ) (Collage.rect gameHeight gameWidth)
+    Collage.gradient
+        (Color.linear (0, gameHeight / 2) (0, -gameHeight / 2) [ (0.6, Color.hsl 0 0 0), (1, Color.hsl (degrees 240) 1 0.1)])
+        (Collage.rect gameHeight gameWidth)
 
 possibleDiamondAt : Player -> Maybe (Float, Float) -> (Float, Float) -> Maybe Collage.Form
 possibleDiamondAt currentPlayer start end =
@@ -278,11 +278,11 @@ possibleDiamondAt currentPlayer start end =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    if model.state == Playing || model.state == Skipped then
+    if isPlaying model.state then
         Sub.batch
-        [ Mouse.clicks MouseClick
-        , Mouse.moves MouseMove
-        , Time.every Time.second Tick
-        ]
+            [ Mouse.clicks MouseClick
+            , Mouse.moves MouseMove
+            , Time.every Time.second Tick
+            ]
     else
         Sub.none

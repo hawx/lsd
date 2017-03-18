@@ -7,9 +7,11 @@ import Element
 import Color
 import Mouse
 import Random
-import Shapes exposing (Diamond, Star)
+import Star exposing (Star)
+import Diamond exposing (Diamond)
 import Helpers exposing (within)
 import Canvas exposing (..)
+
 
 main =
     Html.program
@@ -113,7 +115,7 @@ clickedStar clickPos stars =
 
 overlappedDiamonds : Diamond -> List Diamond -> List Diamond
 overlappedDiamonds diamond =
-    List.map (\x -> { x | overlaps = Shapes.overlap diamond x })
+    List.map (\x -> { x | overlaps = Diamond.overlap diamond x })
 
 -- View
 
@@ -127,8 +129,8 @@ view model =
 game : Model -> Element.Element
 game model =
     List.filterMap identity
-        [ Just <| List.map (Shapes.drawStar model.position) model.stars
-        , Just <| List.map Shapes.drawDiamond model.diamonds
+        [ Just <| List.map (Star.draw model.position) model.stars
+        , Just <| List.map Diamond.draw model.diamonds
         , Maybe.map List.singleton <| possibleDiamondAt model.diamondStart model.position
         ]
         |> List.concat
@@ -136,7 +138,7 @@ game model =
 
 possibleDiamondAt : Maybe (Float, Float) -> (Float, Float) -> Maybe Collage.Form
 possibleDiamondAt start end =
-    Maybe.map (\s -> Shapes.drawDiamond { start = s, end = end, overlaps = False }) start
+    Maybe.map (\s -> Diamond.draw { start = s, end = end, overlaps = False }) start
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

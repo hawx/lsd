@@ -1,9 +1,7 @@
-module Shapes exposing ( Diamond
-                       , drawDiamond
-                       , overlap
-                       , Star
-                       , drawStar
-                       )
+module Diamond exposing ( Diamond
+                        , draw
+                        , overlap
+                        )
 
 import Collage
 import Color
@@ -17,8 +15,8 @@ type alias Diamond =
     }
 
 
-drawDiamond : Diamond -> Collage.Form
-drawDiamond ({ start, end, overlaps } as diamond) =
+draw : Diamond -> Collage.Form
+draw ({ start, end, overlaps } as diamond) =
     diamondPoints diamond
         |> Collage.polygon
         |> Collage.outlined (Collage.solid (diamondColour overlaps))
@@ -101,36 +99,3 @@ diamondColour isOverlap =
         Color.hsl (degrees 150) 1 0.5
     else
         Color.hsl (degrees 350) 1 0.3
-
-type alias Star =
-    { center : (Float, Float)
-    , selected : Bool
-    }
-
-
-drawStar : (Float, Float) -> Star -> Collage.Form
-drawStar mousePos star =
-    let
-        isOver =
-            within star.center 8 mousePos
-
-        radius =
-            5
-
-        center (x, y) =
-            (x - radius / 2, y - radius / 2)
-    in
-        Collage.circle radius
-            |> Collage.filled (starColour isOver star.selected)
-            |> Collage.move (center (absoluteToCanvas star.center))
-
-
-starColour : Bool -> Bool -> Color.Color
-starColour isOver isSelected =
-    if isSelected then
-        Color.hsl (degrees 350) 1 0.5
-    else
-        if isOver then
-            Color.hsl (degrees 350) 1 0.3
-        else
-            Color.hsl (degrees 250) 1 0.5

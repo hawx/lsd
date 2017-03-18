@@ -16,7 +16,7 @@ import Players exposing (..)
 import Time exposing (Time)
 
 turnTime : Time
-turnTime = 5
+turnTime = 50
 
 init : (Model, Cmd Msg)
 init =
@@ -157,7 +157,8 @@ tooClose ((x, y) as pos) stars =
         minDistance = 50
         margin = 10
     in
-        List.any (\star -> Vector.within star.center minDistance pos) stars || x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin
+        List.any (\star -> Vector.within star.center minDistance pos) stars
+            || x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin
 
 clickedStar : Mouse.Position -> List Star -> Maybe Star
 clickedStar clickPos stars =

@@ -45,6 +45,19 @@ body {
 
 .score.active {
     border-color: #fff;
+    animation: pulse 4s 1;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 1px 0 white;
+    }
+    5% {
+        box-shadow: 0 0 15px 3px white;
+    }
+    100% {
+        box-shadow: none;
+    }
 }
 
 .score h1 {

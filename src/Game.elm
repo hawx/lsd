@@ -16,7 +16,7 @@ import Players exposing (..)
 import Time exposing (Time)
 
 turnTime : Time
-turnTime = 50
+turnTime = 30
 
 init : (Model, Cmd Msg)
 init =
@@ -223,13 +223,13 @@ scores model =
               , Html.h2 [] [ Html.text (toString model.timer) ]
               ]
         , Html.div [ Attr.class "score"
-                   , Attr.classList [ ("active", model.currentPlayer == A) ]
+                   , Attr.classList [ ("active", model.currentPlayer == A && (model.state == Playing || model.state == Skipped)) ]
                    ]
             [ Html.h1 [] [ Html.text "Player A" ]
             , Html.h2 [] [ Html.text (toString model.playerA) ]
             ]
         , Html.div [ Attr.class "score"
-                   , Attr.classList [ ("active", model.currentPlayer == B) ]
+                   , Attr.classList [ ("active", model.currentPlayer == B && (model.state == Playing || model.state == Skipped)) ]
                    ]
             [ Html.h1 [] [ Html.text "Player B" ]
             , Html.h2 [] [ Html.text (toString model.playerB) ]

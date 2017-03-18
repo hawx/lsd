@@ -102,10 +102,21 @@ update msg model =
         MouseMove position ->
             case model.diamondStart of
                 Just diamondStart ->
-                    { model
-                        | position = getLocalPosition position
-                        , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False model.currentPlayer) model.diamonds
-                    } ! []
+                    let
+                        selectedStar = Maybe.map .center <| clickedStar position model.stars
+                    in
+                        case selectedStar of
+                            Just selectedStar ->
+                                { model
+                                    | position = selectedStar
+                                    , diamonds = overlappedDiamonds (Diamond diamondStart selectedStar False model.currentPlayer) model.diamonds
+                                } ! []
+
+                            Nothing ->
+                                { model
+                                    | position = getLocalPosition position
+                                    , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False model.currentPlayer) model.diamonds
+                                } ! []
 
                 Nothing ->
                     { model | position = getLocalPosition position } ! []

@@ -96,6 +96,6 @@ orientation (px, py) (qx, qy) (rx, ry) =
 diamondColour : Bool -> Color.Color
 diamondColour isOverlap =
     if isOverlap then
-        Color.hsl (degrees 150) 1 0.5
+        Color.hsl (degrees 0) 1 0.5
     else
-        Color.hsl (degrees 350) 1 0.3
+        Color.hsl (degrees 55) 1 0.5

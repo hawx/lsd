@@ -12,6 +12,6 @@ body {
 .game {
     height: 700px;
     width: 700px;
-    border: 1px solid silver;
+    border: 1px solid #333;
     margin: 40px 40px;
 }

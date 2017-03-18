@@ -22,21 +22,18 @@ draw mousePos star =
 
         radius =
             5
-
-        center (x, y) =
-            (x - radius / 2, y - radius / 2)
     in
         Collage.circle radius
             |> Collage.filled (starColour isOver star.selected)
-            |> Collage.move (center (absoluteToCanvas star.center))
+            |> Collage.move (absoluteToCanvas star.center)
 
 
 starColour : Bool -> Bool -> Color.Color
 starColour isOver isSelected =
     if isSelected then
-        Color.hsl (degrees 350) 1 0.5
+        Color.hsl (degrees 55) 1 0.5
     else
         if isOver then
-            Color.hsl (degrees 350) 1 0.3
+            Color.hsl (degrees 55) 1 0.3
         else
             Color.hsl (degrees 250) 1 0.5

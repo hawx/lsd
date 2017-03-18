@@ -129,12 +129,23 @@ view model =
 game : Model -> Element.Element
 game model =
     List.filterMap identity
-        [ Just <| List.map (Star.draw model.position) model.stars
+        [ Just <| [ background ]
+        , Just <| List.map (Star.draw model.position) model.stars
         , Just <| List.map Diamond.draw model.diamonds
         , Maybe.map List.singleton <| possibleDiamondAt model.diamondStart model.position
         ]
         |> List.concat
         |> Collage.collage gameHeight gameWidth
+
+background : Collage.Form
+background =
+    Collage.gradient (Color.linear
+                          (0, gameHeight / 2)
+                          (0, -gameHeight / 2)
+                          [ (0.6, Color.hsl 0 0 0)
+                          , (1, Color.hsl (degrees 240) 1 0.1)
+                          ]
+                     ) (Collage.rect gameHeight gameWidth)
 
 possibleDiamondAt : Maybe (Float, Float) -> (Float, Float) -> Maybe Collage.Form
 possibleDiamondAt start end =

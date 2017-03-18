@@ -16,7 +16,7 @@ import Players exposing (..)
 import Time exposing (Time)
 
 turnTime : Time
-turnTime = 50
+turnTime = 5
 
 init : (Model, Cmd Msg)
 init =
@@ -63,11 +63,15 @@ type Msg = MouseClick Mouse.Position
          | Tick Time
          | StartGame
 
+start : Model
+start =
+    { model | state = Playing }
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         StartGame ->
-            { model | state = Playing } ! []
+            start ! [ Random.generate AddStar randomPoint ]
 
         MouseClick position ->
             let
@@ -190,17 +194,23 @@ overlay model =
         Won player ->
             case player of
                 A ->
-                    [ Html.div [ Attr.class "overlay" ]
-                          [ Html.h1 [] [ Html.text "Player A Won" ] ]
+                    [ Html.div [ Attr.class "overlay", Event.onClick StartGame ]
+                          [ Html.h1 [] [ Html.text "Player A Won" ]
+                          , Html.h2 [] [ Html.text "Click to play again" ]
+                          ]
                     ]
                 B ->
-                    [ Html.div [ Attr.class "overlay" ]
-                          [ Html.h1 [] [ Html.text "Player B Won" ] ]
+                    [ Html.div [ Attr.class "overlay", Event.onClick StartGame ]
+                          [ Html.h1 [] [ Html.text "Player B Won" ]
+                          , Html.h2 [] [ Html.text "Click to play again" ]
+                          ]
                     ]
 
         Draw ->
-            [ Html.div [ Attr.class "overlay" ]
-                  [ Html.h1 [] [ Html.text "It was a Draw" ] ]
+            [ Html.div [ Attr.class "overlay", Event.onClick StartGame ]
+                  [ Html.h1 [] [ Html.text "It was a Draw" ]
+                  , Html.h2 [] [ Html.text "Click to play again" ]
+                  ]
             ]
 
 

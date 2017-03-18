@@ -17,9 +17,12 @@ gameHeight = 700
 gameWidth : number
 gameWidth = 700
 
+totalStars : Int
+totalStars = 30
+
 main =
     Html.program
-        { init = (model, Random.generate SetStars randomPoints)
+        { init = (model, Random.generate AddStar randomPoint)
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -53,15 +56,15 @@ model =
               ]
     }
 
-randomPoints : Random.Generator (List (Float, Float))
-randomPoints =
-    Random.list 10 <| Random.pair (Random.float 0 gameWidth) (Random.float 0 gameHeight)
+randomPoint : Random.Generator (Float, Float)
+randomPoint =
+    Random.pair (Random.float 0 gameWidth) (Random.float 0 gameHeight)
 
 -- Update
 
 type Msg = MouseClick Mouse.Position
          | MouseMove Mouse.Position
-         | SetStars (List (Float, Float))
+         | AddStar (Float, Float)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -72,9 +75,23 @@ update msg model =
         MouseMove position ->
             { model | position = getLocalPosition position } ! []
 
-        SetStars list ->
-            { model | stars = List.map (\x -> Star x False) list } ! []
+        AddStar pos ->
+            if tooClose pos model.stars then
+                model ! [ Random.generate AddStar randomPoint ]
+            else
+                if List.length model.stars < totalStars then
+                    { model | stars = Star pos False :: model.stars } ! [ Random.generate AddStar randomPoint ]
+                else
+                    { model | stars = Star pos False :: model.stars } ! []
 
+
+tooClose : (Float, Float) -> List Star -> Bool
+tooClose ((x, y) as pos) stars =
+    let
+        minDistance = 50
+        margin = 10
+    in
+        List.any (\star -> within star.position minDistance pos) stars || x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin
 
 clickedStar : Mouse.Position -> List Star -> Maybe Star
 clickedStar clickPos stars =

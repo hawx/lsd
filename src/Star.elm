@@ -4,7 +4,7 @@ module Star exposing ( Star
 
 import Collage
 import Color
-import Helpers exposing (distance, angle, within)
+import Vector
 import Canvas exposing (absoluteToCanvas)
 
 
@@ -18,7 +18,7 @@ draw : (Float, Float) -> Star -> Collage.Form
 draw mousePos star =
     let
         isOver =
-            within star.center 8 mousePos
+            Vector.within star.center 8 mousePos
 
         radius =
             5

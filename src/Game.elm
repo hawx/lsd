@@ -10,7 +10,7 @@ import Mouse
 import Random
 import Star exposing (Star)
 import Diamond exposing (Diamond)
-import Helpers exposing (within)
+import Vector
 import Canvas exposing (..)
 import Players exposing (..)
 import Time exposing (Time)
@@ -157,11 +157,11 @@ tooClose ((x, y) as pos) stars =
         minDistance = 50
         margin = 10
     in
-        List.any (\star -> within star.center minDistance pos) stars || x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin
+        List.any (\star -> Vector.within star.center minDistance pos) stars || x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin
 
 clickedStar : Mouse.Position -> List Star -> Maybe Star
 clickedStar clickPos stars =
-    List.head <| List.filter (\star -> within star.center 8 (getLocalPosition clickPos)) stars
+    List.head <| List.filter (\star -> Vector.within star.center 8 (getLocalPosition clickPos)) stars
 
 overlappedDiamonds : Diamond -> List Diamond -> List Diamond
 overlappedDiamonds diamond =

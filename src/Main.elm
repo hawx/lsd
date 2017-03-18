@@ -55,10 +55,19 @@ update msg model =
             in
                 case (model.diamondStart, selectedStar) of
                     (Just diamondStart, Just selectedStar) ->
-                        { model | diamondStart = Nothing, diamonds = Diamond diamondStart selectedStar False :: model.diamonds } ! []
+                        if List.any .overlaps model.diamonds then
+                            model ! []
+                        else
+                            { model
+                                | diamondStart = Nothing
+                                , diamonds = Diamond diamondStart selectedStar False :: model.diamonds
+                            } ! []
 
                     (Just _, Nothing) ->
-                        { model | diamondStart = Nothing } ! []
+                        { model
+                            | diamondStart = Nothing
+                            , diamonds = List.map (\x -> { x | overlaps = False }) model.diamonds
+                        } ! []
 
                     (Nothing, Just _) ->
                         { model | diamondStart = selectedStar } ! []
@@ -66,13 +75,13 @@ update msg model =
                     (Nothing, Nothing) ->
                         model ! []
 
-
         MouseMove position ->
             case model.diamondStart of
                 Just diamondStart ->
                     { model
                         | position = getLocalPosition position
-                        , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False) model.diamonds } ! []
+                        , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False) model.diamonds
+                    } ! []
 
                 Nothing ->
                     { model | position = getLocalPosition position } ! []

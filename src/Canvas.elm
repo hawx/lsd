@@ -16,7 +16,7 @@ gameWidth = 700
 
 
 totalStars : Int
-totalStars = 30
+totalStars = 50
 
 
 getLocalPosition : Mouse.Position -> (Float, Float)

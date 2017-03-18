@@ -12,12 +12,18 @@ import Diamond exposing (Diamond)
 import Helpers exposing (within)
 import Canvas exposing (..)
 import Players exposing (..)
+import Time exposing (Time)
+
+turnTime : Time
+turnTime = 100
 
 init : (Model, Cmd Msg)
 init =
     (model, Random.generate AddStar randomPoint)
 
 -- Model
+
+type State = NotStarted | Playing | Won Player | Draw
 
 type alias Model =
     { diamondStart : Maybe (Float, Float)
@@ -27,6 +33,8 @@ type alias Model =
     , playerA : Int
     , playerB : Int
     , currentPlayer : Player
+    , timer : Time
+    , state : State
     }
 
 model : Model
@@ -38,6 +46,8 @@ model =
     , playerA = 0
     , playerB = 0
     , currentPlayer = A
+    , timer = turnTime
+    , state = NotStarted
     }
 
 randomPoint : Random.Generator (Float, Float)
@@ -49,6 +59,7 @@ randomPoint =
 type Msg = MouseClick Mouse.Position
          | MouseMove Mouse.Position
          | AddStar (Float, Float)
+         | Tick Time
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -99,14 +110,25 @@ update msg model =
                 else
                     { model | stars = Star pos False :: model.stars } ! []
 
+        Tick time ->
+            { model | timer = model.timer - 1 } ! []
+
 
 endTurn : Int -> Model -> Model
 endTurn score model =
     case model.currentPlayer of
         A ->
-            { model | playerA = model.playerA + score, currentPlayer = B }
+            { model
+                | playerA = model.playerA + score
+                , currentPlayer = B
+                , timer = turnTime
+            }
         B ->
-            { model | playerB = model.playerB + score, currentPlayer = A }
+            { model
+                | playerB = model.playerB + score
+                , currentPlayer = A
+                , timer = turnTime
+            }
 
 tooClose : (Float, Float) -> List Star -> Bool
 tooClose ((x, y) as pos) stars =
@@ -132,11 +154,19 @@ view model =
         [ Html.div [ Attr.class "game" ]
               [ Element.toHtml (game model) ]
         , Html.div [ Attr.class "scores" ]
-            [ Html.div [ Attr.class "a" ]
+            [ Html.div [ Attr.class "score" ]
+                  [ Html.h1 [] [ Html.text "Turn Time" ]
+                  , Html.h2 [] [ Html.text (toString model.timer) ]
+                  ]
+            , Html.div [ Attr.class "score"
+                       , Attr.classList [ ("active", model.currentPlayer == A) ]
+                       ]
                   [ Html.h1 [] [ Html.text "Player A" ]
                   , Html.h2 [] [ Html.text (toString model.playerA) ]
                   ]
-            , Html.div [ Attr.class "b" ]
+            , Html.div [ Attr.class "score"
+                       , Attr.classList [ ("active", model.currentPlayer == B) ]
+                       ]
                 [ Html.h1 [] [ Html.text "Player B" ]
                 , Html.h2 [] [ Html.text (toString model.playerB) ]
                 ]
@@ -176,4 +206,5 @@ subscriptions model =
     Sub.batch
         [ Mouse.clicks MouseClick
         , Mouse.moves MouseMove
+        , Time.every Time.second Tick
         ]

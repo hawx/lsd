@@ -24,13 +24,17 @@ body {
     margin-left: 40px;
 }
 
-.scores .a, .scores .b {
+.score {
     border: 1px solid #333;
     padding: 40px;
     margin-bottom: 40px;
 }
 
-.scores h1 {
+.score.active {
+    border-color: #fff;
+}
+
+.score h1 {
     text-align: center;
     font-weight: 300;
     text-transform: uppercase;
@@ -38,7 +42,7 @@ body {
     margin: 0 0 20px;
 }
 
-.scores h2 {
+.score h2 {
     text-align: center;
     font-weight: bold;
     font-size: 2rem;

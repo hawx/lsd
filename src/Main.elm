@@ -28,38 +28,47 @@ main =
 -- Model
 
 type alias Model =
-    { click : Maybe (Float, Float)
-    , position : (Float, Float)
-    , stars : List (Float, Float)
+    { position : (Float, Float)
+    , stars : List Star
+    }
+
+type alias Star =
+    { position : (Float, Float)
+    , selected : Bool
     }
 
 model : Model
 model =
-    { click = Nothing
-    , position = (0, 0)
-    , stars = [ (50, 50)
-              , (100, 100)
-              , (50, 100)
+    { position = (0, 0)
+    , stars = [ Star (50, 50) False
+              , Star (100, 100) False
+              , Star (50, 100) False
               ]
     }
 
 -- Update
 
-type Msg = MouseDown Mouse.Position
-         | MouseUp Mouse.Position
+type Msg = MouseClick Mouse.Position
          | MouseMove Mouse.Position
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        MouseDown position ->
-            { model | click = Just (getLocalPosition position) } ! []
-
-        MouseUp position ->
-            { model | click = Nothing } ! []
+        MouseClick position ->
+            { model | stars = selectedStars position model.stars } ! []
 
         MouseMove position ->
             { model | position = getLocalPosition position } ! []
+
+
+selectedStars : Mouse.Position -> List Star -> List Star
+selectedStars clickPos stars =
+    List.map (\star ->
+                  if within star.position 8 (getLocalPosition clickPos) then
+                      { star | selected = not star.selected }
+                  else
+                      star
+             ) stars
 
 getLocalPosition : Mouse.Position -> (Float, Float)
 getLocalPosition { x, y } =
@@ -75,7 +84,6 @@ view : Model -> Html Msg
 view model =
     Html.div [ Attr.class "game" ]
         [ Element.toHtml (game model)
-        , Html.text (toString model.click)
         , Html.text (toString model.position)
         ]
 
@@ -84,28 +92,33 @@ game model =
     List.map (starAt model.position) model.stars
         |> Collage.collage gameHeight gameWidth
 
-starAt : (Float, Float) -> (Float, Float) -> Collage.Form
-starAt mousePos pos =
-    Collage.move (absoluteToCanvas pos) (star (within pos 5 mousePos))
+starAt : (Float, Float) -> Star -> Collage.Form
+starAt mousePos star =
+    Collage.move (absoluteToCanvas star.position) (starShape (within star.position 8 mousePos) star.selected)
 
 within : (Float, Float) -> Float -> (Float, Float) -> Bool
 within (targetX, targetY) radius (actualX, actualY) =
     targetX - radius <= actualX && actualX <= targetX + radius
         && targetY - radius <= actualY && actualY <= targetY + radius
 
-star : Bool -> Collage.Form
-star isOver =
-    Collage.filled (starColour isOver) (Collage.circle 5)
+starShape : Bool -> Bool -> Collage.Form
+starShape isOver isSelected =
+    Collage.filled (starColour isOver isSelected) (Collage.circle 5)
 
-starColour : Bool -> Color.Color
-starColour isOver =
-    if isOver then Color.hsl 70 100 100 else Color.hsl 350 100 50
+starColour : Bool -> Bool -> Color.Color
+starColour isOver isSelected =
+    if isSelected then
+        Color.hsl (degrees 350) 1 0.5
+    else
+        if isOver then
+            Color.hsl (degrees 350) 1 0.3
+        else
+            Color.hsl (degrees 250) 1 0.5
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Mouse.downs MouseDown
-        , Mouse.ups MouseUp
+        [ Mouse.clicks MouseClick
         , Mouse.moves MouseMove
         ]

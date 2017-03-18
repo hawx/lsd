@@ -26,6 +26,7 @@ type alias Model =
     , position : (Float, Float)
     , stars : List Star
     , diamonds : List Diamond
+    , points : Int
     }
 
 model : Model
@@ -34,6 +35,7 @@ model =
     , position = (0, 0)
     , stars = []
     , diamonds = []
+    , points = 0
     }
 
 randomPoint : Random.Generator (Float, Float)
@@ -61,6 +63,7 @@ update msg model =
                             { model
                                 | diamondStart = Nothing
                                 , diamonds = Diamond diamondStart selectedStar False :: model.diamonds
+                                , points = model.points + 1
                             } ! []
 
                     (Just _, Nothing) ->
@@ -118,7 +121,7 @@ view : Model -> Html Msg
 view model =
     Html.div [ Attr.class "game" ]
         [ Element.toHtml (game model)
-        , Html.text (toString model.position)
+        , Html.text (toString model.points)
         ]
 
 game : Model -> Element.Element

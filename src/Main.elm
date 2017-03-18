@@ -6,6 +6,16 @@ import Collage
 import Element
 import Color
 import Mouse
+import Debug
+
+gameMargin : Float
+gameMargin = 41
+
+gameHeight : number
+gameHeight = 700
+
+gameWidth : number
+gameWidth = 700
 
 main =
     Html.program
@@ -18,17 +28,18 @@ main =
 -- Model
 
 type alias Model =
-    { click : Maybe Mouse.Position
-    , position : Mouse.Position
+    { click : Maybe (Float, Float)
+    , position : (Float, Float)
     , stars : List (Float, Float)
     }
 
 model : Model
 model =
     { click = Nothing
-    , position = { x = 0, y = 0 }
+    , position = (0, 0)
     , stars = [ (50, 50)
               , (100, 100)
+              , (50, 100)
               ]
     }
 
@@ -42,13 +53,21 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         MouseDown position ->
-            { model | click = Just position } ! []
+            { model | click = Just (getLocalPosition position) } ! []
 
         MouseUp position ->
             { model | click = Nothing } ! []
 
         MouseMove position ->
-            { model | position = position } ! []
+            { model | position = getLocalPosition position } ! []
+
+getLocalPosition : Mouse.Position -> (Float, Float)
+getLocalPosition { x, y } =
+    (toFloat x - gameMargin, toFloat y - gameMargin)
+
+absoluteToCanvas : (Float, Float) -> (Float, Float)
+absoluteToCanvas (x, y) =
+    (x - (gameWidth / 2), (gameHeight / 2) - y)
 
 -- View
 
@@ -62,16 +81,25 @@ view model =
 
 game : Model -> Element.Element
 game model =
-    List.map starAt model.stars
-        |> Collage.collage 700 700
+    List.map (starAt model.position) model.stars
+        |> Collage.collage gameHeight gameWidth
 
-starAt : (Float, Float) -> Collage.Form
-starAt pos =
-    Collage.move pos star
+starAt : (Float, Float) -> (Float, Float) -> Collage.Form
+starAt mousePos pos =
+    Collage.move (absoluteToCanvas pos) (star (within pos 5 mousePos))
 
-star : Collage.Form
-star =
-    Collage.filled (Color.hsl 350 100 100) (Collage.circle 5)
+within : (Float, Float) -> Float -> (Float, Float) -> Bool
+within (targetX, targetY) radius (actualX, actualY) =
+    targetX - radius <= actualX && actualX <= targetX + radius
+        && targetY - radius <= actualY && actualY <= targetY + radius
+
+star : Bool -> Collage.Form
+star isOver =
+    Collage.filled (starColour isOver) (Collage.circle 5)
+
+starColour : Bool -> Color.Color
+starColour isOver =
+    if isOver then Color.hsl 70 100 100 else Color.hsl 350 100 50
 
 
 subscriptions : Model -> Sub Msg

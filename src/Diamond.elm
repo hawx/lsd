@@ -7,19 +7,21 @@ import Collage
 import Color
 import Helpers exposing (distance, angle, within)
 import Canvas exposing (absoluteToCanvas)
+import Players exposing (Player)
 
 type alias Diamond =
     { start : (Float, Float)
     , end : (Float, Float)
     , overlaps : Bool
+    , player : Player
     }
 
 
 draw : Diamond -> Collage.Form
-draw ({ start, end, overlaps } as diamond) =
+draw ({ start, end, overlaps, player } as diamond) =
     diamondPoints diamond
         |> Collage.polygon
-        |> Collage.outlined (Collage.solid (diamondColour overlaps))
+        |> Collage.outlined (Collage.solid (diamondColour overlaps player))
 
 diamondPoints : Diamond -> List (Float, Float)
 diamondPoints { start, end } =
@@ -93,9 +95,13 @@ orientation (px, py) (qx, qy) (rx, ry) =
             else
                 2
 
-diamondColour : Bool -> Color.Color
-diamondColour isOverlap =
+diamondColour : Bool -> Player -> Color.Color
+diamondColour isOverlap player =
     if isOverlap then
-        Color.hsl (degrees 0) 1 0.5
+        Color.hsl (degrees 0) 1 1
     else
-        Color.hsl (degrees 55) 1 0.5
+        case player of
+            Players.A ->
+                Color.hsl (degrees 349) 1 0.5
+            Players.B ->
+                Color.hsl (degrees 55) 1 0.5

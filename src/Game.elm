@@ -11,7 +11,7 @@ import Star exposing (Star)
 import Diamond exposing (Diamond)
 import Helpers exposing (within)
 import Canvas exposing (..)
-
+import Players exposing (..)
 
 init : (Model, Cmd Msg)
 init =
@@ -24,7 +24,9 @@ type alias Model =
     , position : (Float, Float)
     , stars : List Star
     , diamonds : List Diamond
-    , points : Int
+    , playerA : Int
+    , playerB : Int
+    , currentPlayer : Player
     }
 
 model : Model
@@ -33,7 +35,9 @@ model =
     , position = (0, 0)
     , stars = []
     , diamonds = []
-    , points = 0
+    , playerA = 0
+    , playerB = 0
+    , currentPlayer = A
     }
 
 randomPoint : Random.Generator (Float, Float)
@@ -58,10 +62,9 @@ update msg model =
                         if List.any .overlaps model.diamonds then
                             model ! []
                         else
-                            { model
+                            endTurn 1 { model
                                 | diamondStart = Nothing
-                                , diamonds = Diamond diamondStart selectedStar False :: model.diamonds
-                                , points = model.points + 1
+                                , diamonds = Diamond diamondStart selectedStar False model.currentPlayer :: model.diamonds
                             } ! []
 
                     (Just _, Nothing) ->
@@ -81,7 +84,7 @@ update msg model =
                 Just diamondStart ->
                     { model
                         | position = getLocalPosition position
-                        , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False) model.diamonds
+                        , diamonds = overlappedDiamonds (Diamond diamondStart (getLocalPosition position) False model.currentPlayer) model.diamonds
                     } ! []
 
                 Nothing ->
@@ -96,6 +99,14 @@ update msg model =
                 else
                     { model | stars = Star pos False :: model.stars } ! []
 
+
+endTurn : Int -> Model -> Model
+endTurn score model =
+    case model.currentPlayer of
+        A ->
+            { model | playerA = model.playerA + score, currentPlayer = B }
+        B ->
+            { model | playerB = model.playerB + score, currentPlayer = A }
 
 tooClose : (Float, Float) -> List Star -> Bool
 tooClose ((x, y) as pos) stars =
@@ -119,7 +130,14 @@ view : Model -> Html Msg
 view model =
     Html.div [ Attr.class "game" ]
         [ Element.toHtml (game model)
-        , Html.text (toString model.points)
+        , Html.div []
+            [ Html.text "Player A: "
+            , Html.text (toString model.playerA)
+            ]
+        , Html.div []
+            [ Html.text "Player B: "
+            , Html.text (toString model.playerB)
+            ]
         ]
 
 game : Model -> Element.Element
@@ -128,7 +146,7 @@ game model =
         [ Just <| [ background ]
         , Just <| List.map (Star.draw model.position) model.stars
         , Just <| List.map Diamond.draw model.diamonds
-        , Maybe.map List.singleton <| possibleDiamondAt model.diamondStart model.position
+        , Maybe.map List.singleton <| possibleDiamondAt model.currentPlayer model.diamondStart model.position
         ]
         |> List.concat
         |> Collage.collage gameHeight gameWidth
@@ -143,9 +161,12 @@ background =
                           ]
                      ) (Collage.rect gameHeight gameWidth)
 
-possibleDiamondAt : Maybe (Float, Float) -> (Float, Float) -> Maybe Collage.Form
-possibleDiamondAt start end =
-    Maybe.map (\s -> Diamond.draw { start = s, end = end, overlaps = False }) start
+possibleDiamondAt : Player -> Maybe (Float, Float) -> (Float, Float) -> Maybe Collage.Form
+possibleDiamondAt currentPlayer start end =
+    Maybe.map (\s -> Diamond.draw { start = s
+                                  , end = end
+                                  , overlaps = False
+                                  , player = currentPlayer }) start
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

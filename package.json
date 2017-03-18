@@ -6,7 +6,8 @@
     "main": "index.js",
     "scripts": {
         "dev": "webpack-dev-server --hot --inline --port 8090",
-        "build": "webpack"
+        "build": "webpack",
+        "gh-pages": "git branch -D gh-pages && webpack && mv dist/* . && sed -i 's/\"\\//\"\\/lsd\\//' index.html && sed -i 's/\"\\//\"\\/lsd\\//' assets/styles.css && git checkout -b gh-pages && git add -A && git commit -m 'gh-pages build' && git push -f origin gh-pages && git checkout master"
     },
     "author": "",
     "license": "MIT",

@@ -128,15 +128,18 @@ overlappedDiamonds diamond =
 
 view : Model -> Html Msg
 view model =
-    Html.div [ Attr.class "game" ]
-        [ Element.toHtml (game model)
-        , Html.div []
-            [ Html.text "Player A: "
-            , Html.text (toString model.playerA)
-            ]
-        , Html.div []
-            [ Html.text "Player B: "
-            , Html.text (toString model.playerB)
+    Html.div [ Attr.class "container" ]
+        [ Html.div [ Attr.class "game" ]
+              [ Element.toHtml (game model) ]
+        , Html.div [ Attr.class "scores" ]
+            [ Html.div [ Attr.class "a" ]
+                  [ Html.h1 [] [ Html.text "Player A" ]
+                  , Html.h2 [] [ Html.text (toString model.playerA) ]
+                  ]
+            , Html.div [ Attr.class "b" ]
+                [ Html.h1 [] [ Html.text "Player B" ]
+                , Html.h2 [] [ Html.text (toString model.playerB) ]
+                ]
             ]
         ]
 

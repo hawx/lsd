@@ -59,9 +59,21 @@ update msg model =
     case msg of
         MouseClick position ->
             let
-                selectedStar = clickedStar position model.stars
+                selectedStar = Maybe.map .center <| clickedStar position model.stars
             in
-                { model | diamondStart = Maybe.map .center selectedStar  } ! []
+                case (model.diamondStart, selectedStar) of
+                    (Just diamondStart, Just selectedStar) ->
+                        { model | diamondStart = Nothing, diamonds = Diamond diamondStart selectedStar :: model.diamonds } ! []
+
+                    (Just _, Nothing) ->
+                        { model | diamondStart = Nothing } ! []
+
+                    (Nothing, Just _) ->
+                        { model | diamondStart = selectedStar } ! []
+
+                    (Nothing, Nothing) ->
+                        model ! []
+
 
         MouseMove position ->
             { model | position = getLocalPosition position } ! []
@@ -101,6 +113,7 @@ game : Model -> Element.Element
 game model =
     List.filterMap identity
         [ Just <| List.map (Shapes.drawStar model.position) model.stars
+        , Just <| List.map Shapes.drawDiamond model.diamonds
         , Maybe.map List.singleton <| possibleDiamondAt model.diamondStart model.position
         ]
         |> List.concat
